@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://api.pwnedpasswords.com; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#10202B">
+<meta name="description" content="Pemeriksa keamanan akun Google yang berjalan sepenuhnya di perangkat Anda.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="styles.css">
+<title>Periksa Keamanan Google</title>
+</head>
+<body>
+<header class="top">
+  <h1>Periksa Keamanan Google</h1>
+  <button id="install" class="ghost" type="button" hidden>Pasang aplikasi</button>
+</header>
+
+<main>
+  <!-- PERIKSA -->
+  <section id="tab-periksa" class="panel" aria-labelledby="h-periksa">
+    <h2 id="h-periksa" class="sr">Periksa</h2>
+    <div class="score" id="score" data-level="low">
+      <div class="ring-wrap">
+        <svg viewBox="0 0 120 120" class="ring" aria-hidden="true">
+          <circle class="ring-bg" cx="60" cy="60" r="52"/>
+          <circle class="ring-fg" id="ringFg" cx="60" cy="60" r="52" transform="rotate(-90 60 60)"/>
+        </svg>
+        <div class="ring-num"><span id="scoreNum">0</span><small>dari 100</small></div>
+      </div>
+      <div class="score-text">
+        <p class="score-label" id="scoreLabel" aria-live="polite">Belum diperiksa</p>
+        <p class="muted" id="scoreCount">0 dari 0 pemeriksaan selesai</p>
+        <p class="muted" id="scoreDate"></p>
+      </div>
+    </div>
+
+    <div id="priority" class="priority" hidden>
+      <h3>Kerjakan dulu</h3>
+      <ul id="priorityList"></ul>
+    </div>
+
+    <p class="note">Google tidak mengizinkan aplikasi lain membaca pengaturan akun Anda. Buka tiap pengaturan, periksa sendiri, lalu centang bila sudah aman.</p>
+
+    <div id="groups"></div>
+
+    <button id="reset" class="ghost wide" type="button">Hapus semua centang</button>
+  </section>
+
+  <!-- SANDI -->
+  <section id="tab-sandi" class="panel" aria-labelledby="h-sandi" hidden>
+    <h2 id="h-sandi">Periksa sandi</h2>
+    <p class="note">Analisis kekuatan berjalan di perangkat ini. Sandi tidak disimpan dan tidak dikirim. Cek kebocoran hanya mengirim 5 karakter awal dari hash SHA-1.</p>
+
+    <label class="field" for="pw">Sandi yang ingin diperiksa</label>
+    <input id="pw" type="password" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="text">
+    <label class="inline"><input type="checkbox" id="pwShow"> Tampilkan sandi</label>
+
+    <div class="meter" id="meter" data-level="0" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+    <p class="strength" id="strength" aria-live="polite">Ketik sandi untuk mulai.</p>
+    <p class="muted" id="crack"></p>
+    <ul class="issues" id="issues"></ul>
+
+    <div class="row">
+      <button id="pwCheck" class="primary" type="button" disabled>Cek kebocoran</button>
+      <button id="pwClear" class="ghost" type="button">Hapus</button>
+    </div>
+    <p class="result" id="breach" role="status" aria-live="polite" hidden></p>
+
+    <hr>
+
+    <h3>Buat sandi acak</h3>
+    <label class="field" for="genLen">Panjang: <output id="genLenOut">20</output> karakter</label>
+    <input id="genLen" type="range" min="12" max="40" value="20">
+    <div class="gen" id="genOut" aria-live="polite">Tekan Buat</div>
+    <div class="row">
+      <button id="genBtn" class="primary" type="button">Buat</button>
+      <button id="genCopy" class="ghost" type="button" disabled>Salin</button>
+    </div>
+    <p class="muted" id="genMsg" role="status"></p>
+    <p class="note">Simpan sandi di pengelola sandi, bukan di catatan biasa. Setelah disalin, clipboard dikosongkan otomatis dalam 30 detik.</p>
+  </section>
+
+  <!-- TAUTAN -->
+  <section id="tab-tautan" class="panel" aria-labelledby="h-tautan" hidden>
+    <h2 id="h-tautan">Cek tautan</h2>
+    <p class="note">Tempel tautan dari email, SMS, atau chat yang mengaku dari Google. Tautan hanya dianalisis, tidak dibuka.</p>
+    <label class="field" for="url">Tautan</label>
+    <input id="url" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="url" placeholder="https://...">
+    <div class="row">
+      <button id="urlCheck" class="primary" type="button">Periksa tautan</button>
+      <button id="urlClear" class="ghost" type="button">Hapus</button>
+    </div>
+    <div id="urlResult" class="verdict" hidden>
+      <p class="verdict-title" id="urlTitle"></p>
+      <p class="host" id="urlHost"></p>
+      <ul id="urlFlags"></ul>
+    </div>
+    <p class="note">Aman terbaik: jangan klik tautan login. Ketik sendiri accounts.google.com atau buka aplikasi resmi.</p>
+  </section>
+
+  <!-- DARURAT -->
+  <section id="tab-darurat" class="panel" aria-labelledby="h-darurat" hidden>
+    <h2 id="h-darurat">Akun dibobol?</h2>
+    <div class="alertbox">
+      <p><strong>Tidak bisa masuk sama sekali?</strong> Mulai dari pemulihan akun, lalu lanjut ke langkah di bawah setelah berhasil masuk.</p>
+      <a class="btn primary" href="https://g.co/recover" target="_blank" rel="noopener noreferrer">Buka pemulihan akun</a>
+    </div>
+    <p>Kalau masih bisa masuk, kerjakan berurutan:</p>
+    <ol class="steps" id="steps"></ol>
+  </section>
+</main>
+
+<nav class="tabs" aria-label="Menu utama">
+  <button type="button" data-tab="periksa" aria-current="page">Periksa</button>
+  <button type="button" data-tab="sandi">Sandi</button>
+  <button type="button" data-tab="tautan">Tautan</button>
+  <button type="button" data-tab="darurat">Darurat</button>
+</nav>
+
+<div id="update" class="update" role="status" hidden><span>Versi baru tersedia.</span><button id="reload" type="button" class="primary">Muat ulang</button></div>
+
+<script src="app.js"></script>
+</body>
+</html>
